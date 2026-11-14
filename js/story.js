@@ -9,6 +9,7 @@ const LEVELS=[null,
  {map:4,nm:'KATHEDRALE',mus:'level4_cracker',song:'Cracker'},
  {map:6,nm:'PRÄSIDENTENSTRASSE',mus:'level5_ballack',song:'ballack'},
  {map:7,nm:'ULTIMATIVE KAMPF ARENA BONN',mus:'level6_fur_jacket_swag',song:'fur.jacket.swag.for.real'}];
+const BOSS_HELPERS=false;           // true = Bosse rufen wieder Helfer dazu (deutlich schwerer)
 const WAVES_PER_LEVEL=5;            // Level 1: 5 Wellen, Level 2: 10, ... Level 6: 30
 // Bosse: hp Leben, sp Tempo, fan Faecherschuss (Winkel), fcd Pause dazwischen, rad Kugeln im Ring, rcd Pause,
 // min Helfer die er ruft (20 Messer-Typ, 21 Becher-Typ, 22 Sturmhaube), mel Nahkampf, bomb/dash/tele/spiral = Spezialangriffe
@@ -115,7 +116,7 @@ function storyWaves(dt,np){
  if(s.boss==1){const b=E.find(e=>e.t>=30);if(!b||b.dead){s.boss=2;for(const e of E)if(!e.dead){e.dead=1;e.hp=0}J=J.filter(j=>j.o>=0);toSpawn=0;ev(8);setPh('clear');return}}
  if(!E.some(e=>!e.dead)&&toSpawn<=0){waitT-=dt;if(waitT<=0){
   if(s.wv<s.wm){s.wv++;wave=s.wv;for(const p of players)if(p.on)for(let w=2;w<WP.length;w++)if(p.lo>>w&1)p.am[w]=Math.max(p.am[w]||0,w==6?1:Math.ceil(MX[w]*.25));if((s.wv-1)%5==0){s.ck=s.wv;saveGame()}toSpawn=3+Math.ceil(s.lv/2)+Math.min(5,s.wv/4|0)+np;waitT=2.5}
-  else if(!s.boss){s.boss=1;s.ck=s.wm+1;saveGame();mk(29+s.lv,farSpawn());ev(5);waitT=2.5}}}
+  else if(!s.boss){s.boss=1;s.ck=s.wm+1;saveGame();E=[];J=J.filter(j=>j.o>=0);mk(29+s.lv,farSpawn());ev(5);waitT=2.5}}}
 }
 function farSpawn(){const L=ESP.filter(q=>players.every(p=>!p.on||!p.al||Math.hypot(p.x-q[0],p.y-q[1])>5));const P=L.length?L:ESP;return P[Math.random()*P.length|0]}
 function storySpawn(){
@@ -177,7 +178,7 @@ function storyAI(e,tp,bd,ux,uy,los,dt){
  if(bd<1.4&&e.mc<=0){hurtP(tp,c.mel);e.mc=1}
  e.rb=(e.rb===undefined?4:e.rb)-dt;
  if(e.rb<=0&&los){const n=c.rad+(e.en?6:0);for(let k=0;k<n;k++){const a=k/n*6.283+e.ph;J.push({x:e.x,y:e.y,vx:Math.cos(a)*4.6,vy:Math.sin(a)*4.6,t:2,o:-1,l:4,d:8+L*2})}
-  for(const m of c.min)if(E.length<cap)mk(m,farSpawn());if(e.en&&E.length<cap)mk(22,farSpawn());e.rb=c.rcd*q;e.at=.3;ev(5)}
+  if(BOSS_HELPERS){for(const m of c.min)if(E.length<cap)mk(m,farSpawn());if(e.en&&E.length<cap)mk(22,farSpawn())}e.rb=c.rcd*q;e.at=.3;ev(5)}
  if(los&&e.cd<=0){for(const k of c.fan)shot(e,ux,uy,k,6+L*.35,2,10+L*2);e.cd=c.fcd*q;ev(4)}
  if(c.dash){e.t2=(e.t2===undefined?c.dash.cd:e.t2)-dt;if(e.t2<=0&&los&&bd>2.5){e.dash=.75;e.dx=ux;e.dy=uy;e.dh=0;e.t2=c.dash.cd*q;e.at=.3;ev(5)}}
  if(c.bomb){e.t3=(e.t3===undefined?c.bomb.cd:e.t3)-dt;if(e.t3<=0&&los&&bd<14){J.push({x:e.x,y:e.y,vx:ux*7,vy:uy*7,t:24,o:-1,l:Math.max(.25,bd/7),d:c.bomb.d});e.t3=c.bomb.cd*q}}
