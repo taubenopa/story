@@ -10,16 +10,17 @@ const LEVELS=[null,
  {map:6,nm:'PRÄSIDENTENSTRASSE',mus:'level5_ballack',song:'ballack'},
  {map:7,nm:'ULTIMATIVE KAMPF ARENA BONN',mus:'level6_fur_jacket_swag',song:'fur.jacket.swag.for.real'}];
 const BOSS_HELPERS=false;           // true = Bosse rufen wieder Helfer dazu (deutlich schwerer)
+const START_LIVES=5;                // gemeinsame Leben pro Level
 const WAVES_PER_LEVEL=5;            // Level 1: 5 Wellen, Level 2: 10, ... Level 6: 30
 // Bosse: hp Leben, sp Tempo, fan Faecherschuss (Winkel), fcd Pause dazwischen, rad Kugeln im Ring, rcd Pause,
 // min Helfer die er ruft (20 Messer-Typ, 21 Becher-Typ, 22 Sturmhaube), mel Nahkampf, bomb/dash/tele/spiral = Spezialangriffe
 const BOSS=[null,
- {nm:'LIL M',spr:'lilm',hp:700,sp:1.3,fan:[-.25,0,.25],fcd:1.4,rad:12,rcd:6.5,min:[20],mel:20},
- {nm:'DRACHENLORD',spr:'drachenlord',hp:1500,sp:1.15,fan:[-.25,0,.25],fcd:1.3,rad:16,rcd:5.5,min:[21,20],mel:28,bomb:{cd:4.5,d:30}},
- {nm:'SEHRJAMAL',spr:'sehrjamal',hp:2300,sp:1.9,fan:[-.4,-.2,0,.2,.4],fcd:1.2,rad:16,rcd:5.5,min:[22,20],mel:28,tele:7},
- {nm:'JERMAINE',spr:'jermaine',hp:3300,sp:1.7,fan:[-.25,0,.25],fcd:1.4,rad:20,rcd:5,min:[20,20,21],mel:35,dash:{cd:4,v:9.5,d:32}},
- {nm:'RAPHAEL',spr:'raphael',hp:4600,sp:1.9,fan:[-.4,-.2,0,.2,.4],fcd:1.1,rad:22,rcd:4.5,min:[22,21,20],mel:35,bomb:{cd:2.6,d:38},dash:{cd:6,v:10,d:32}},
- {nm:'SLIMEE REBEL',spr:'slime',hp:7500,sp:2,fan:[-.6,-.4,-.2,0,.2,.4,.6],fcd:1,rad:28,rcd:4,min:[22,22,21,20],mel:40,bomb:{cd:3.2,d:42},dash:{cd:5,v:11,d:36},tele:6.5,spiral:1}];
+ {nm:'LIL M',spr:'lilm',hp:450,sp:1.3,fan:[-.25,0,.25],fcd:1.9,rad:8,rcd:7.5,min:[20],mel:20},
+ {nm:'DRACHENLORD',spr:'drachenlord',hp:900,sp:1.15,fan:[-.25,0,.25],fcd:1.8,rad:10,rcd:7,min:[21,20],mel:28,bomb:{cd:4.5,d:30}},
+ {nm:'SEHRJAMAL',spr:'sehrjamal',hp:1400,sp:1.9,fan:[-.4,-.2,0,.2,.4],fcd:1.7,rad:12,rcd:6.5,min:[22,20],mel:28,tele:7},
+ {nm:'JERMAINE',spr:'jermaine',hp:2000,sp:1.7,fan:[-.25,0,.25],fcd:1.7,rad:14,rcd:6,min:[20,20,21],mel:35,dash:{cd:4,v:9.5,d:32}},
+ {nm:'RAPHAEL',spr:'raphael',hp:2700,sp:1.9,fan:[-.4,-.2,0,.2,.4],fcd:1.5,rad:16,rcd:5.5,min:[22,21,20],mel:35,bomb:{cd:2.6,d:38},dash:{cd:6,v:10,d:32}},
+ {nm:'SLIMEE REBEL',spr:'slime',hp:4200,sp:2,fan:[-.4,-.2,0,.2,.4],fcd:1.3,rad:20,rcd:5,min:[22,22,21,20],mel:40,bomb:{cd:3.2,d:42},dash:{cd:5,v:11,d:36},tele:6.5,spiral:1}];
 const CHARS=[['taubenopa','taubenopa'],['EuroJunkie','eurojunkie'],['Jxhn2k','jxhn2k'],['YoungCola','youngcola'],['werwlf','werwlf'],['Adam','adam']];
 // Case Opening: welche Waffen (Index in WP) nach welchem Level in der Kiste sein koennen
 const CASEP=[null,[2,8,3],[2,8,3,9,11],[2,8,3,9,11,5,10,7],[3,9,11,5,10,7,4,12],[5,10,7,4,12,6]];
@@ -64,8 +65,8 @@ function storyMenu(){
 }
 function storyMode(){storyLobby=1;$('m0').style.display='none';$('msx').style.display='block';ul();mkPeer()}
 function startStory(cont){
- const sv=cont?loadSave():null,D=+$('sdf').value;dif=[.75,1,1.4][D];dmg=[.65,1,1.35][D];dm=0;story=1;
- SS={lv:sv?sv.lv:1,ph:sv?'map':'intro',t:0,wv:0,wm:0,boss:0,lives:3,coins:sv?sv.coins|0:0,ck:sv?sv.ck||1:1,lo:sv?sv.lo|3:3,dl:0,cw:0,seed:0,kills:0,tm:0,cf:0};
+ const sv=cont?loadSave():null,D=+$('sdf').value;dif=[.6,.85,1.2][D];dmg=[.4,.65,1][D];dm=0;story=1;
+ SS={lv:sv?sv.lv:1,ph:sv?'map':'intro',t:0,wv:0,wm:0,boss:0,lives:START_LIVES,coins:sv?sv.coins|0:0,ck:sv?sv.ck||1:1,lo:sv?sv.lo|3:3,dl:0,cw:0,seed:0,kills:0,tm:0,cf:0};
  players[0].nm=$('nm').value.slice(0,10);players[0].ch=myCh;
  for(const q of players){q.lo=SS.lo;q.w=1;q.am=AM0();q.sc=0}
  mode=1;$('m').style.display='none';bgVol();try{const r=cv.requestPointerLock();if(r&&r.catch)r.catch(()=>{})}catch(e){}
@@ -78,7 +79,7 @@ addEventListener('mousedown',()=>{if(mode&&S&&S.st&&S.st.ph!='play'&&S.st.ph!='c
 function setPh(p){SS.ph=p;SS.t=0;SS.cf=0;SS.dl=0}
 function storyAmmo(p){for(let w=2;w<WP.length;w++)if(p.lo>>w&1)p.am[w]=Math.max(p.am[w]||0,Math.ceil(MX[w]*.4))}
 function startLevel(){
- const s=SS;loadMap(LEVELS[s.lv].map);E=[];J=[];PK=[];NJ=[];s.wm=s.lv*WAVES_PER_LEVEL;s.wv=Math.min(s.wm,Math.max(0,s.ck-1));wave=s.wv;s.boss=0;toSpawn=0;spawnT=0;waitT=2.5;s.lives=Math.max(3,s.lives);
+ const s=SS;loadMap(LEVELS[s.lv].map);E=[];J=[];PK=[];NJ=[];s.wm=s.lv*WAVES_PER_LEVEL;s.wv=Math.min(s.wm,Math.max(0,s.ck-1));wave=s.wv;s.boss=0;toSpawn=0;spawnT=0;waitT=2.5;s.lives=Math.max(START_LIVES,s.lives);
  for(const p of players){p.x=SP[p.i][0];p.y=SP[p.i][1];p.a=A0[p.i];p.rc++;p.al=true;p.hp=100;p.ar=0;p.iv=2;p.lo=s.lo;storyAmmo(p)}
  flow();saveGame();setPh('play');
 }
@@ -106,7 +107,7 @@ function storyTick(dt){
    {const on=players.filter(p=>p.on);if(s.ph=='play'&&on.length&&on.every(p=>!p.al)&&s.lives<=0){ev(9);setPh('over')}}break;
   case'clear':sim(dt);if(s.t>4.5){if(s.lv>=6)setPh('talk');else openCase()}break;
   case'case':if(cf&&s.t>7)setPh(s.lv>=6?'end':'talk');break;
-  case'over':if(cf&&s.t>1.5){s.lives=3;setPh('card')}break;
+  case'over':if(cf&&s.t>1.5){s.lives=START_LIVES;setPh('card')}break;
   case'end':if(s.t<1)try{localStorage.removeItem('hfStory')}catch(e){}if(cf&&s.t>3)location.reload();break;
  }
 }
@@ -115,26 +116,26 @@ function storyWaves(dt,np){
  const s=SS;if(s.ph!='play')return;
  if(s.boss==1){const b=E.find(e=>e.t>=30);if(!b||b.dead){s.boss=2;for(const e of E)if(!e.dead){e.dead=1;e.hp=0}J=J.filter(j=>j.o>=0);toSpawn=0;ev(8);setPh('clear');return}}
  if(!E.some(e=>!e.dead)&&toSpawn<=0){waitT-=dt;if(waitT<=0){
-  if(s.wv<s.wm){s.wv++;wave=s.wv;for(const p of players)if(p.on)for(let w=2;w<WP.length;w++)if(p.lo>>w&1)p.am[w]=Math.max(p.am[w]||0,w==6?1:Math.ceil(MX[w]*.25));if((s.wv-1)%5==0){s.ck=s.wv;saveGame()}toSpawn=3+Math.ceil(s.lv/2)+Math.min(5,s.wv/4|0)+np;waitT=2.5}
-  else if(!s.boss){s.boss=1;s.ck=s.wm+1;saveGame();E=[];J=J.filter(j=>j.o>=0);mk(29+s.lv,farSpawn());ev(5);waitT=2.5}}}
+  if(s.wv<s.wm){s.wv++;wave=s.wv;for(const p of players)if(p.on&&p.al)p.hp=Math.min(100,p.hp+25);for(const p of players)if(p.on)for(let w=2;w<WP.length;w++)if(p.lo>>w&1)p.am[w]=Math.max(p.am[w]||0,w==6?1:Math.ceil(MX[w]*.25));if((s.wv-1)%5==0){s.ck=s.wv;saveGame()}toSpawn=2+Math.ceil(s.lv/2)+Math.min(4,s.wv/5|0)+np;waitT=2.5}
+  else if(!s.boss){s.boss=1;s.ck=s.wm+1;saveGame();E=[];J=J.filter(j=>j.o>=0);for(const p of players)if(p.on&&p.al){p.hp=100;p.ar=Math.max(p.ar,50)}mk(29+s.lv,farSpawn());ev(5);waitT=2.5}}}
 }
 function farSpawn(){const L=ESP.filter(q=>players.every(p=>!p.on||!p.al||Math.hypot(p.x-q[0],p.y-q[1])>5));const P=L.length?L:ESP;return P[Math.random()*P.length|0]}
 function storySpawn(){
- const s=SS;if(spawnT>0||E.length>=10+s.lv*2)return;
+ const s=SS;if(spawnT>0||E.length>=5+s.lv)return;
  const L=[20,21];if(s.lv>1||s.wv>=3)L.push(22);if(s.lv>=3)L.push(20,22);
- mk(L[Math.random()*L.length|0],farSpawn());toSpawn--;spawnT=Math.max(.35,1.05-s.lv*.1);
+ mk(L[Math.random()*L.length|0],farSpawn());toSpawn--;spawnT=Math.max(.7,1.5-s.lv*.1);
 }
 function storyEnemy(t,at){
  const s=SS,L=s.lv,np=players.filter(p=>p.on).length;let hp,r,sp;
- if(t>=30){const c=BOSS[t-29];hp=c.hp*(np>1?1.5:1);r=.6;sp=c.sp}
- else{const k=1+(L-1)*.45+s.wv*.02,T={20:[32,.3,3.5+L*.15],21:[85,.42,1.9+L*.08],22:[48,.34,2.4+L*.1]}[t];hp=T[0]*k;r=T[1];sp=T[2]}
+ if(t>=30){const c=BOSS[t-29];hp=c.hp*(np>1?1.3:1);r=.6;sp=c.sp}
+ else{const k=1+(L-1)*.28+s.wv*.012,T={20:[26,.3,2.5+L*.12],21:[60,.42,1.6+L*.07],22:[36,.34,2+L*.08]}[t];hp=T[0]*k;r=T[1];sp=T[2]}
  let ex=at[0]+(Math.random()-.5)*.8,ey=at[1]+(Math.random()-.5)*.8;if(!can(ex,ey,.5)){ex=at[0];ey=at[1]}
  return{x:ex,y:ey,t,hp:hp*dif,mh:hp*dif,r,sp,fl:0,cd:1,dead:0,ph:Math.random()*6};
 }
 function storyKill(e){
  SS.kills++;
  if(e.t>=30){for(let k=0;k<10;k++){const a=k*.63;PK.push({x:e.x+Math.cos(a)*.9,y:e.y+Math.sin(a)*.9,t:25})}}
- else if(Math.random()<.45)PK.push({x:e.x+.25,y:e.y+.25,t:25});
+ else{if(Math.random()<.45)PK.push({x:e.x+.25,y:e.y+.25,t:25});if(Math.random()<.14)PK.push({x:e.x-.25,y:e.y-.2,t:7})}
  for(let i=0;PK.length>60&&i<PK.length;i++)if(PK[i].t==25){PK.splice(i,1);i--}
 }
 function storyCoin(p){p.sc+=5;if(++SS.coins>=50){SS.coins-=50;SS.lives++;ev(7)}}
@@ -157,33 +158,33 @@ function storyAI(e,tp,bd,ux,uy,los,dt){
  const L=SS.lv;
  if(e.t==20){ // Messer-Typ: rennt im Zickzack, sticht zu
   if(bd>.9){if(los){const z=Math.sin(e.ph*.6)*.7,c=Math.cos(z),s=Math.sin(z);move(e,ux*c-uy*s,ux*s+uy*c,e.sp*dt)}else chase(e,ux,uy,los,e.sp*dt)}
-  else if(e.cd<=0){hurtP(tp,6+L*1.6);e.cd=.55}
+  else if(e.cd<=0){hurtP(tp,5+L);e.cd=.8}
   return}
  if(e.t==21){ // Becher-Typ: zaeh, wirft seinen Becher
   if(!(los&&bd<5))chase(e,ux,uy,los,e.sp*dt);
-  if(bd<1.1&&e.cd<=.9){hurtP(tp,8+L*2);e.cd=1.1}
-  else if(los&&bd<10&&e.cd<=0){ev(4);shot(e,ux,uy,0,5.5,23,10+L*2);e.cd=2.3-L*.12}
+  if(bd<1.1&&e.cd<=.9){hurtP(tp,7+L);e.cd=1.2}
+  else if(los&&bd<10&&e.cd<=0){ev(4);shot(e,ux,uy,0,4.5,23,7+L*1.2);e.cd=2.8-L*.1}
   return}
  if(e.t==22){ // Sturmhaube: haelt Abstand und schiesst
   if(!(los&&bd<7))chase(e,ux,uy,los,e.sp*dt);else if(bd<3.5)move(e,-ux,-uy,e.sp*.6*dt);
-  if(los&&bd<13&&e.cd<=0){ev(4);for(const k of(L>=5?[-.14,0,.14]:L>=3?[-.08,.08]:[0]))shot(e,ux,uy,k,7+L*.4,2,7+L*1.5);e.cd=1.35-L*.07}
+  if(los&&bd<13&&e.cd<=0){ev(4);for(const k of(L>=5?[-.1,.1]:[0]))shot(e,ux,uy,k,5.5+L*.3,2,5+L);e.cd=1.9-L*.08}
   return}
  // ----- Boss -----
  const c=BOSS[e.t-29],cap=10+L*2;
  e.mc=(e.mc||0)-dt;
  if(e.dash>0){e.dash-=dt;move(e,e.dx,e.dy,c.dash.v*dt);if(bd<1.4&&!e.dh){hurtP(tp,c.dash.d);e.dh=1}return}
- if(!e.en&&e.hp<e.mh*.5){e.en=1;e.sp*=1.35;e.at=.3;ev(5)}
- const q=e.en?.7:1;
+ if(!e.en&&e.hp<e.mh*.5){e.en=1;e.sp*=1.2;e.at=.3;ev(5)}
+ const q=e.en?.8:1;
  if(!(los&&bd<5.5))chase(e,ux,uy,los,e.sp*dt);
  if(bd<1.4&&e.mc<=0){hurtP(tp,c.mel);e.mc=1}
  e.rb=(e.rb===undefined?4:e.rb)-dt;
- if(e.rb<=0&&los){const n=c.rad+(e.en?6:0);for(let k=0;k<n;k++){const a=k/n*6.283+e.ph;J.push({x:e.x,y:e.y,vx:Math.cos(a)*4.6,vy:Math.sin(a)*4.6,t:2,o:-1,l:4,d:8+L*2})}
+ if(e.rb<=0&&los){const n=c.rad+(e.en?4:0);for(let k=0;k<n;k++){const a=k/n*6.283+e.ph;J.push({x:e.x,y:e.y,vx:Math.cos(a)*3.8,vy:Math.sin(a)*3.8,t:2,o:-1,l:4,d:6+L})}
   if(BOSS_HELPERS){for(const m of c.min)if(E.length<cap)mk(m,farSpawn());if(e.en&&E.length<cap)mk(22,farSpawn())}e.rb=c.rcd*q;e.at=.3;ev(5)}
- if(los&&e.cd<=0){for(const k of c.fan)shot(e,ux,uy,k,6+L*.35,2,10+L*2);e.cd=c.fcd*q;ev(4)}
+ if(los&&e.cd<=0){for(const k of c.fan)shot(e,ux,uy,k,5+L*.25,2,7+L*1.2);e.cd=c.fcd*q;ev(4)}
  if(c.dash){e.t2=(e.t2===undefined?c.dash.cd:e.t2)-dt;if(e.t2<=0&&los&&bd>2.5){e.dash=.75;e.dx=ux;e.dy=uy;e.dh=0;e.t2=c.dash.cd*q;e.at=.3;ev(5)}}
  if(c.bomb){e.t3=(e.t3===undefined?c.bomb.cd:e.t3)-dt;if(e.t3<=0&&los&&bd<14){J.push({x:e.x,y:e.y,vx:ux*7,vy:uy*7,t:24,o:-1,l:Math.max(.25,bd/7),d:c.bomb.d});e.t3=c.bomb.cd*q}}
  if(c.tele){e.t4=(e.t4===undefined?c.tele:e.t4)-dt;if(e.t4<=0){const p=farSpawn();NJ.push({x:e.x,y:e.y,vx:0,vy:0,t:5,o:-1,l:.3});e.x=p[0];e.y=p[1];e.t4=c.tele*q;ev(5)}}
- if(c.spiral&&e.en){e.t5=(e.t5||0)-dt;if(e.t5<=0){e.sa=(e.sa||0)+.42;for(const a of[e.sa,e.sa+3.1416])J.push({x:e.x,y:e.y,vx:Math.cos(a)*5,vy:Math.sin(a)*5,t:23,o:-1,l:4,d:14});e.t5=e.hp<e.mh*.2?.09:.14}}
+ if(c.spiral&&e.en){e.t5=(e.t5||0)-dt;if(e.t5<=0){e.sa=(e.sa||0)+.42;for(const a of[e.sa,e.sa+3.1416])J.push({x:e.x,y:e.y,vx:Math.cos(a)*5,vy:Math.sin(a)*5,t:23,o:-1,l:4,d:9});e.t5=e.hp<e.mh*.2?.16:.24}}
 }
 
 // ================= ANZEIGE (Host und Mitspieler) =================
@@ -249,7 +250,7 @@ function drawCard(s){
  const L=LEVELS[s.lv],ps=S.p.filter(p=>p.on);x.fillStyle='#000';x.fillRect(0,0,VW,VH);
  txt('LEVEL 1-'+s.lv,VW/2,62,28,'#fff','center');txt(L.nm,VW/2,84,L.nm.length>20?12:15,'#fd4','center');
  const w=ps.length*30+70,a0=VW/2-w/2;ps.forEach((p,i)=>sprD((CHARS[p.ch|0]||CHARS[0])[1],a0+15+i*30,170,60));
- txt('× '+Math.max(3,s.lives),a0+ps.length*30+12,150,22,'#fff');
+ txt('× '+Math.max(START_LIVES,s.lives),a0+ps.length*30+12,150,22,'#fff');
  txt('BOSS: '+BOSS[s.lv].nm,VW/2,204,12,'#f55','center');txt(s.lv*WAVES_PER_LEVEL+' Wellen',VW/2,220,10,'#bbc','center');
  txt('Song: '+L.song,VW/2,236,9,'#889','center');
  if(s.ck>1)txt('Checkpoint: '+(s.ck>s.lv*WAVES_PER_LEVEL?'direkt zum Boss':'weiter ab Welle '+s.ck),VW/2,254,9,'#5e8','center');
