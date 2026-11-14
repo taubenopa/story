@@ -326,18 +326,36 @@ addEventListener('mousemove',e=>{if(document.pointerLockElement===cv)me.a+=e.mov
 addEventListener('mousedown',e=>{if(!mode)return;if(document.pointerLockElement===cv)me.f=1;else cv.requestPointerLock()});
 addEventListener('mouseup',()=>{me.f=0});
 addEventListener('wheel',e=>{if(mode){const L=owned(me.lo||63),k=Math.max(0,L.indexOf(me.w));me.w=L[(k+(e.deltaY>0?1:L.length-1))%L.length]}});
+// ---------- Controller (Gamepad) ----------
+// Linker Stick laufen, rechter Stick drehen, RT schiessen, LT/L3 rennen, RB/LB oder Steuerkreuz Waffe, A weiter, Y Minimap, Start Pause
+const GP={f:0,s:0,t:0,run:0,on:0,fr:0,b:[],pad:null};
+function padRumble(){try{const a=GP.pad&&GP.pad.vibrationActuator;if(a&&a.playEffect)a.playEffect('dual-rumble',{duration:140,strongMagnitude:.6,weakMagnitude:.4})}catch(e){}}
+function padPoll(){
+ let g=null;try{for(const q of navigator.getGamepads())if(q&&q.connected){g=q;break}}catch(e){}
+ GP.pad=g;if(!g){GP.f=GP.s=GP.t=GP.run=0;return}
+ const dz=v=>{v=v||0;return Math.abs(v)<.18?0:(v-Math.sign(v)*.18)/.82},B=i=>{const q=g.buttons[i];return q&&(q.pressed||q.value>.4)?1:0},hit=i=>B(i)&&!GP.b[i];
+ const rx=dz(g.axes[2]);GP.s=dz(g.axes[0]);GP.f=-dz(g.axes[1]);GP.t=rx*(.35+.65*Math.abs(rx));GP.run=B(6)||B(10);
+ if(GP.s||GP.f||GP.t||g.buttons.some((q,i)=>B(i)))GP.on=1;
+ const fr=B(7);if(fr!==GP.fr){GP.fr=fr;me.f=fr}
+ const sw=d=>{const L=owned(me.lo||63),k=Math.max(0,L.indexOf(me.w));me.w=L[(k+d+L.length)%L.length]};
+ if(hit(5)||hit(15))sw(1);if(hit(4)||hit(14))sw(-1);
+ if(hit(0)||(hit(7)&&S&&S.st&&S.st.ph!='play'&&S.st.ph!='clear'))storyConfirm();
+ if(hit(3))showMap^=1;if(hit(9)&&mode==1)paused^=1;
+ for(let i=0;i<17;i++)GP.b[i]=B(i);
+}
+addEventListener('gamepadconnected',()=>{GP.on=1});
 // ---------- Lokaler Spieler ----------
 function local(){
  const P=S.p[id];if(!P)return;
  if(mode==2&&P.rc!==me.rc){me.rc=P.rc;me.x=P.x;me.y=P.y;if(!S.st)me.w=firstW(me.lo)}
  if(S.st){if(mode==2)me.lo=P.lo;if(!(me.lo>>me.w&1))me.w=1}
- if(P.hp<lastHp){hurtFl=.3;hurtSnd();shk=Math.max(shk,2.5)}lastHp=P.hp;
+ if(P.hp<lastHp){padRumble();hurtFl=.3;hurtSnd();shk=Math.max(shk,2.5)}lastHp=P.hp;
  hm-=dt;shk=Math.max(0,shk-dt*14);fl-=dt;rec=Math.max(0,rec-dt*6);hurtFl-=dt;lc-=dt;{const wk=S.st?S.st.lv*1e3+S.st.wv+(S.st.boss?500:0):S.wv;if(wk!==lastWv){lastWv=wk;if(S.st?S.st.ph=='play'&&S.st.wv>0:S.wv>0){bn=3.5;jingle(S.st?S.st.boss:S.wv%5==0)}}}bn-=dt;
  if(!P.al||(S.st&&S.st.ph!='play'&&S.st.ph!='clear'))return;
- me.a+=((ky.ArrowRight?1:0)-(ky.ArrowLeft?1:0))*2.5*dt;
- const f=(ky.KeyW||ky.ArrowUp?1:0)-(ky.KeyS||ky.ArrowDown?1:0),sd=(ky.KeyD?1:0)-(ky.KeyA?1:0),c=Math.cos(me.a),s=Math.sin(me.a);
+ me.a+=((ky.ArrowRight?1:0)-(ky.ArrowLeft?1:0))*2.5*dt+GP.t*3.3*dt;
+ const f=(ky.KeyW||ky.ArrowUp?1:0)-(ky.KeyS||ky.ArrowDown?1:0)+GP.f,sd=(ky.KeyD?1:0)-(ky.KeyA?1:0)+GP.s,c=Math.cos(me.a),s=Math.sin(me.a);
  let vx=c*f-s*sd,vy=s*f+c*sd;const l=Math.hypot(vx,vy);if(l>1){vx/=l;vy/=l}
- const V=ky.ShiftLeft?5:3.4;bob+=l>0?dt*(V>4?13:9):0;const nx=me.x+vx*V*dt,ny=me.y+vy*V*dt;if(can(nx,me.y,.25))me.x=nx;if(can(me.x,ny,.25))me.y=ny;
+ const V=ky.ShiftLeft||GP.run?5:3.4;bob+=l>0?dt*(V>4?13:9):0;const nx=me.x+vx*V*dt,ny=me.y+vy*V*dt;if(can(nx,me.y,.25))me.x=nx;if(can(me.x,ny,.25))me.y=ny;
  if(me.f&&lc<=0){const w=WP[me.w];if(!w.am||P.am[me.w]>0){lc=w.cd;fl=.08;rec=1;gun(me.w);shotFx(me.w)}else{lc=.3;click()}}
 }
 // ---------- Rendering ----------
@@ -595,7 +613,7 @@ function hud(){
  if(!P.al){x.fillStyle='rgba(120,0,0,.5)';x.fillRect(0,0,VW,VH);x.fillStyle='#fff';x.fillText(S.st&&S.st.lives<=0&&P.rt<=0?'KEINE LEBEN MEHR - dein Partner muss durchhalten!':'DU BIST TOT - Respawn in '+Math.max(0,Math.ceil(P.rt)),VW/2,VH/2)}
  else if(!S.dm&&!S.e.some(e=>!e.dead)&&(!S.st||S.st.ph=='play'))x.fillText(S.st&&S.st.wv>=S.st.wm?'Der Boss kommt...':'Nächste Welle kommt...',VW/2,50);
  if(bn>0){x.globalAlpha=Math.min(1,bn);x.fillStyle=(S.st?S.st.boss:S.wv%5==0)?'#f44':'#fd4';x.font='bold 28px monospace';x.fillText(S.st?storyBanner():S.wv%10==0?'WELLE '+S.wv+' - BOSS: Jxhn2K!':S.wv%5==0?'WELLE '+S.wv+' - BOSS!':'WELLE '+S.wv,VW/2,70);x.globalAlpha=1;x.font='bold 16px monospace'}
- if(document.pointerLockElement!==cv){x.fillStyle='#fd4';x.fillText('KLICKEN ZUM STEUERN',VW/2,VH/2-40)}
+ if(document.pointerLockElement!==cv&&!GP.on){x.fillStyle='#fd4';x.fillText('KLICKEN ZUM STEUERN',VW/2,VH/2-40)}
  if(paused){x.fillStyle='rgba(0,0,0,.5)';x.fillRect(0,0,VW,VH);x.fillStyle='#fff';x.fillText('PAUSE  (P = weiter)',VW/2,VH/2)}
  if(muted){x.font='10px monospace';x.fillStyle='#aaa';x.textAlign='left';x.fillText('Ton aus (N)',8,VH-34);x.textAlign='center';x.font='bold 16px monospace'}
  if(lost){x.fillStyle='#f55';x.fillText('VERBINDUNG ZUM HOST VERLOREN',VW/2,VH/2)}
@@ -605,6 +623,7 @@ let last=performance.now();
 function loop(t){
  dt=Math.min(.05,(t-last)/1000);last=t;
  if(mode){
+  padPoll();
   if(mode==1){
     if(story)storyTick(dt);else if(!paused)sim(dt);if(!dm&&!story&&wave>best){best=wave;try{localStorage.hfBest=wave}catch(e){}}S={t:'s',m:cur,dm:dm,ev:EV,p:players,e:E,j:J,k:PK,wv:wave,st:story?SS:undefined};
    snapT-=dt;if(snapT<=0){snapT=.05;const m=JSON.stringify(S,rnd);chs.forEach(c=>{if(c&&(c.readyState=='open'||c.open))c.send(m)});EV=[]}
