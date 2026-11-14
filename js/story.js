@@ -11,7 +11,7 @@ const LEVELS=[null,
  {map:7,nm:'ULTIMATIVE KAMPF ARENA BONN',mus:'level6_fur_jacket_swag',song:'fur.jacket.swag.for.real'}];
 const BOSS_HELPERS=false;           // true = Bosse rufen wieder Helfer dazu (deutlich schwerer)
 const START_LIVES=5;                // gemeinsame Leben pro Level
-const WAVES_PER_LEVEL=5;            // Level 1: 5 Wellen, Level 2: 10, ... Level 6: 30
+const WAVES_PER_LEVEL=3;            // Level 1: 3 Wellen, Level 2: 6, ... Level 6: 18 (5 = 5/10/.../30)
 // Bosse: hp Leben, sp Tempo, fan Faecherschuss (Winkel), fcd Pause dazwischen, rad Kugeln im Ring, rcd Pause,
 // min Helfer die er ruft (20 Messer-Typ, 21 Becher-Typ, 22 Sturmhaube), mel Nahkampf, bomb/dash/tele/spiral = Spezialangriffe
 const BOSS=[null,
@@ -34,19 +34,19 @@ const DLG={
   'Ihr kriegt eine Pistole. Mehr nicht. Viel Glück - ihr werdet es brauchen.'],
  1:['Lil M in der Arena umgehauen? Okay. Anfängerglück.',
   'Während ihr da rumgeballert habt, hab ich schon dreimal "Passwort vergessen" bei LIFESTYLECRAZY gedrückt.',
-  'Im Ringlabyrinth wartet der Drachenlord. Zehn Wellen. Verlauft euch nicht.'],
+  'Im Ringlabyrinth wartet der Drachenlord. {n} Wellen. Verlauft euch nicht.'],
  2:['Durchs Ringlabyrinth gekommen... Respekt. Da verlauf ich mich selber jedes Mal.',
   'Egal. Ich hab dem Insta-Support geschrieben, dass der Account mir gehört. Mit ganz vielen Ausrufezeichen!!!',
-  'Nächster Halt: der Bunker. 15 Wellen. SehrJamal lässt da keinen wieder raus.'],
+  'Nächster Halt: der Bunker. {n} Wellen. SehrJamal lässt da keinen wieder raus.'],
  3:['Den Bunker habt ihr auch geknackt?! SehrJamal, du hattest EINE Aufgabe!',
   'Macht nichts. Ich hab 5.000 Bots gekauft, die melden LIFESTYLECRAZY jetzt rund um die Uhr.',
-  'In der Kathedrale wartet Jermaine. 20 Wellen. Betet schon mal.'],
+  'In der Kathedrale wartet Jermaine. {n} Wellen. Betet schon mal.'],
  4:['Jermaine ist in der Kathedrale gefallen... langsam nervt ihr richtig.',
   'Ich hab jetzt einen Fake-Account gemacht: LIFESTYLECRAZYY mit zwei Y. Merkt keiner. Die Follower kommen schon rüber.',
-  'Kommt in die Präsidentenstraße. Raphael wartet zwischen den Bäumen. 25 Wellen - das schafft ihr nie.'],
+  'Kommt in die Präsidentenstraße. Raphael wartet zwischen den Bäumen. {n} Wellen - das schafft ihr nie.'],
  5:['Raphael?! In der Präsidentenstraße?! Vor allen Nachbarn?!',
   'Na gut. Dann eben auf die harte Tour. Der Account gehört mir. Schon immer.',
-  'Ultimative Kampf Arena Bonn. 30 Wellen. Und dann ICH. Bringt alles mit, was ihr in den Kisten gefunden habt.'],
+  'Ultimative Kampf Arena Bonn. {n} Wellen. Und dann ICH. Bringt alles mit, was ihr in den Kisten gefunden habt.'],
  6:['Okay... okay! Ich geb auf. Ihr habt gewonnen.',
   'LIFESTYLECRAZY bleibt bei euch. Ich lösch die Bots, den Fake-Account, alles.',
   '...aber ändert trotzdem mal das Passwort. Nur so ein Tipp.',
@@ -76,6 +76,7 @@ addEventListener('keydown',e=>{if(e.code=='Enter'||e.code=='Space')storyConfirm(
 addEventListener('mousedown',()=>{if(mode&&S&&S.st&&S.st.ph!='play'&&S.st.ph!='clear'&&document.pointerLockElement===cv)storyConfirm()});
 
 // ================= ABLAUF (nur Host) =================
+const dlgL=s=>(s.ph=='intro'?DLG.intro:DLG[s.lv]).map(t=>t.replace('{n}',(s.lv+1)*WAVES_PER_LEVEL));
 function setPh(p){SS.ph=p;SS.t=0;SS.cf=0;SS.dl=0}
 function storyAmmo(p){for(let w=2;w<WP.length;w++)if(p.lo>>w&1)p.am[w]=Math.max(p.am[w]||0,Math.ceil(MX[w]*.4))}
 function startLevel(){
@@ -97,7 +98,7 @@ function storyTick(dt){
  const s=SS;s.t+=dt;const cf=s.cf&&s.t>.5;s.cf=0;
  for(const p of players)if(p.on&&p.lo!==s.lo){p.lo=s.lo;storyAmmo(p)}
  switch(s.ph){
-  case'intro':case'talk':{const L=s.ph=='intro'?DLG.intro:DLG[s.lv];
+  case'intro':case'talk':{const L=dlgL(s);
    if(cf){if(s.t*40<L[s.dl].length)s.t=99;else if(s.dl<L.length-1){s.dl++;s.t=0}
     else if(s.ph=='intro')setPh('map');else if(s.lv>=6)openCase();else{s.lv++;s.ck=1;saveGame();setPh('map')}}
    break}
@@ -116,7 +117,7 @@ function storyWaves(dt,np){
  const s=SS;if(s.ph!='play')return;
  if(s.boss==1){const b=E.find(e=>e.t>=30);if(!b||b.dead){s.boss=2;for(const e of E)if(!e.dead){e.dead=1;e.hp=0}J=J.filter(j=>j.o>=0);toSpawn=0;ev(8);setPh('clear');return}}
  if(!E.some(e=>!e.dead)&&toSpawn<=0){waitT-=dt;if(waitT<=0){
-  if(s.wv<s.wm){s.wv++;wave=s.wv;for(const p of players)if(p.on&&p.al)p.hp=Math.min(100,p.hp+25);for(const p of players)if(p.on)for(let w=2;w<WP.length;w++)if(p.lo>>w&1)p.am[w]=Math.max(p.am[w]||0,w==6?1:Math.ceil(MX[w]*.25));if((s.wv-1)%5==0){s.ck=s.wv;saveGame()}toSpawn=2+Math.ceil(s.lv/2)+Math.min(4,s.wv/5|0)+np;waitT=2.5}
+  if(s.wv<s.wm){s.wv++;wave=s.wv;for(const p of players)if(p.on&&p.al)p.hp=Math.min(100,p.hp+25);for(const p of players)if(p.on)for(let w=2;w<WP.length;w++)if(p.lo>>w&1)p.am[w]=Math.max(p.am[w]||0,w==6?1:Math.ceil(MX[w]*.25));if((s.wv-1)%WAVES_PER_LEVEL==0){s.ck=s.wv;saveGame()}toSpawn=2+Math.ceil(s.lv/2)+Math.min(4,s.wv/5|0)+np;waitT=2.5}
   else if(!s.boss){s.boss=1;s.ck=s.wm+1;saveGame();E=[];J=J.filter(j=>j.o>=0);for(const p of players)if(p.on&&p.al){p.hp=100;p.ar=Math.max(p.ar,50)}mk(29+s.lv,farSpawn());ev(5);waitT=2.5}}}
 }
 function farSpawn(){const L=ESP.filter(q=>players.every(p=>!p.on||!p.al||Math.hypot(p.x-q[0],p.y-q[1])>5));const P=L.length?L:ESP;return P[Math.random()*P.length|0]}
@@ -215,7 +216,7 @@ function storyScreen(){
  if(lost)txt('VERBINDUNG ZUM HOST VERLOREN',VW/2,14,12,'#f55','center');
 }
 function drawTalk(s){
- const L=s.ph=='intro'?DLG.intro:DLG[s.lv],line=L[Math.min(s.dl,L.length-1)],n=Math.min(line.length,s.t*40|0),won=s.ph=='talk'&&s.lv>=6;
+ const L=dlgL(s),line=L[Math.min(s.dl,L.length-1)],n=Math.min(line.length,s.t*40|0),won=s.ph=='talk'&&s.lv>=6;
  const g=x.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#12061f');g.addColorStop(1,'#2a0a1c');x.fillStyle=g;x.fillRect(0,0,VW,VH);
  x.globalAlpha=.35;x.fillStyle=igrad(0,40,150,230);x.beginPath();x.arc(66,150,92+Math.sin(performance.now()/500)*4,0,7);x.fill();x.globalAlpha=1;
  sprD('slime',66,300,268);
