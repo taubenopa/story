@@ -1,0 +1,59 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>HELLFIRE LAN</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="css/style.css"></head><body>
+<canvas id="cv"></canvas>
+<div id="m"><div>
+<h1>HELLFIRE LAN</h1><div class="sub">Koop-Shooter gegen Wellen &middot; 1&ndash;4 Spieler &middot; Story-Modus im Duo</div>
+<div class="tabs"><button class="tab on" id="tb0" onclick="tab(0)">Spiel</button><button class="tab" id="tb1" onclick="tab(1)">Waffen <span id="lc"></span></button><button class="tab" id="tb2" onclick="tab(2)">Musik</button></div>
+
+<div id="t0">
+<div id="m0">
+<h2>Spielername</h2><input id="nm" maxlength="10" value="Spieler">
+<div class="row"><button class="pri big" onclick="hostMode()">&#9654; Host / Solo</button><button class="big" onclick="joinMode()">&#8674; Beitreten</button></div>
+<button class="story" onclick="storyMode()">&#9733; STORY-MODUS (Duo) &ndash; Slimee Rebel &amp; der Insta-Account</button>
+<details><summary>Steuerung &amp; Hilfe</summary><p><kbd>WASD</kbd> bewegen &middot; Maus zielen &middot; Klick schie&szlig;en &middot; <kbd>Shift</kbd> rennen<br><kbd>1</kbd>&ndash;<kbd>9</kbd> oder Mausrad: Waffe wechseln &middot; <kbd>M</kbd> Minimap &middot; <kbd>N</kbd> Ton aus &middot; <kbd>P</kbd> Pause &middot; <kbd>Enter</kbd> Dialoge weiter</p>
+<p>Online: Host erzeugt einen 4-stelligen Raum-Code, Mitspieler geben ihn unter &bdquo;Beitreten&ldquo; ein.</p></details>
+</div>
+<div id="mh" style="display:none">
+<h2>Raum-Code &ndash; an Mitspieler schicken</h2><div class="code" id="hc">...</div>
+<div class="grid3" style="margin-top:12px">
+<label>Karte<select id="mp"><option value="0">Arena</option><option value="1">Ringlabyrinth</option><option value="2">Pfeilerhalle (H&ouml;lle)</option><option value="3">Bunker</option><option value="4">Kathedrale</option><option value="5">Schlangenweg</option><option value="6">Pr&auml;sidentenstra&szlig;e</option><option value="7">Ultimative Kampf Arena Bonn</option></select></label>
+<label>Schwierigkeit<select id="df"><option value="0">Leicht</option><option value="1" selected>Normal</option><option value="2">Hart</option></select></label>
+<label>Modus<select id="gm"><option value="0">Koop</option><option value="1">Deathmatch (2+)</option></select></label></div>
+<p id="pl" style="margin-top:12px"></p>
+<div class="row"><button class="pri big" onclick="startGame()">SPIEL STARTEN</button></div>
+<details><summary>Ohne Internet: manuelle Codes</summary><div><button onclick="invite()">+ Mitspieler einladen</button>
+<p>1) Diesen Code an den Mitspieler schicken:</p><textarea id="oc" readonly></textarea>
+<p>2) Antwort-Code des Mitspielers hier einf&uuml;gen:</p><textarea id="ia"></textarea>
+<button onclick="accept()" style="margin-top:6px">Verbinden</button></div></details>
+</div>
+<div id="msx" style="display:none">
+<h2>Story-Modus &middot; Raum-Code f&uuml;r deinen Duo-Partner</h2><div class="code" id="hc2">...</div>
+<p id="pl2" class="hint" style="text-align:center"></p>
+<h2>Dein Charakter</h2><div class="chars" id="cg"></div>
+<div class="grid3" style="margin-top:12px"><label>Schwierigkeit<select id="sdf"><option value="0">Leicht</option><option value="1" selected>Normal</option><option value="2">Hart</option></select></label></div>
+<div class="row"><button class="pri big" onclick="startStory(0)">NEUES SPIEL</button><button class="big" id="scont" onclick="startStory(1)">FORTSETZEN</button></div>
+<p class="hint" style="margin-top:12px">6 Level &middot; pro Level 5 Wellen mehr + Boss &middot; Start nur mit Pistole &middot; nach jedem Level Case Opening mit neuer Waffe. Dein Partner gibt den Raum-Code unter &bdquo;Beitreten&ldquo; ein (geht auch nach dem Start). Alleine spielen geht auch. Der Fortschritt wird beim Host gespeichert.</p>
+</div>
+<div id="mj" style="display:none">
+<h2>Dein Charakter (nur Story-Modus)</h2><div class="chars" id="cg2"></div>
+<h2>Raum-Code vom Host</h2><div class="row" style="margin-top:0"><input id="jc" maxlength="12" placeholder="ABCD" style="font:800 24px monospace;letter-spacing:6px;text-transform:uppercase;text-align:center"><button class="pri" onclick="joinCode()">Verbinden</button></div><p id="js2" class="hint"></p>
+<details><summary>Ohne Internet: manuelle Codes</summary><div><p>1) Code vom Host einf&uuml;gen:</p><textarea id="ic"></textarea>
+<button onclick="join()" style="margin-top:6px">Antwort-Code erzeugen</button>
+<p>2) Diesen Antwort-Code an den Host schicken:</p><textarea id="oc2" readonly></textarea>
+<p id="js">Danach warten, das Spiel startet automatisch.</p></div></details>
+</div>
+<p id="ls" class="hint"></p>
+</div>
+
+<div id="t1" style="display:none"><p class="hint" style="margin-top:0">W&auml;hle bis zu 5 Waffen. Die Faust ist immer dabei. Munition gibt es nur f&uuml;r gew&auml;hlte Waffen. (Gilt f&uuml;r Koop &amp; Deathmatch &ndash; im Story-Modus startest du mit der Pistole und bekommst neue Waffen per Case Opening.)</p><div id="lg"></div></div>
+
+<div id="t2" style="display:none"><h2 style="margin-top:0">Hintergrundmusik</h2><input type="file" id="mf" accept="audio/*">
+<h2>Lautst&auml;rke</h2><input type="range" id="mv" min="0" max="100" value="15">
+<p class="hint">Der Song l&auml;uft leise im Loop. Alternativ eine Datei <b>music.mp3</b> neben die index.html legen &ndash; dann startet sie automatisch.</p></div>
+</div></div>
+<script src="js/peerjs.min.js"></script>
+<script src="js/game.js"></script>
+<script src="js/story.js"></script>
+<script>boot()</script>
+</body></html>
